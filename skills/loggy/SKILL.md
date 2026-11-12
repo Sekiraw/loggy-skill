@@ -85,6 +85,8 @@ Time inside the render that no fetch accounts for is shown as such. That time is
    - the fetches that cost the most, with their cache hit share;
    - how much time is outside any fetch;
    - how often fetches ran one after another that could have run together, and what that would save.
+
+   The person can see the same in the dashboard: on the Activity page, the route's **Breakdown** link.
 3. **Look at one slow request.** Call `get_log` on the slowest request that `route_timing` names. It shows the request's waterfall, each step as start +length in ms, and what could make it faster.
 4. **Fix it in the code.** Find the route's `page.tsx`, its layouts or its `route.ts`, and the code behind each fetch host and path.
    - **Fetches awaited one after another that don't depend on each other.** Start them together with `Promise.all`, or move each into its own component under `<Suspense>` so they stream separately.
@@ -92,7 +94,7 @@ Time inside the render that no fetch accounts for is shown as such. That time is
      - With `cacheComponents: true` in `next.config`, cache it with `"use cache"` and `cacheLife`.
      - Otherwise, use `fetch(url, { next: { revalidate } })`.
      - Check `node_modules/next/dist/docs/` for the version the project uses, since caching changed between versions.
-   - **The same URL fetched more than once.** Fetch it once and pass the result down, or cache it.
+   - **The same URL fetched more than once.** This is often a layout and its page each asking for the same thing, such as the signed-in user or their profile. Wrap the function that asks in React's `cache()`, so one request runs it once. Or fetch it once and pass the result down.
    - **A lot of time outside fetches.** Look at the other awaits in that code: database queries that could run together, a missing index, or work that could be cached.
 5. **Check after the deploy.** Compare `route_timing` with `from` set after the deploy against the period before it. `list_releases` shows when the deploy started logging.
 
