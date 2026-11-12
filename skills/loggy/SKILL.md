@@ -26,6 +26,7 @@ Loggy collects the browser and server logs of Next.js apps and runs their featur
 |---|---|
 | Add Loggy to an app, or check an existing setup | [references/setup.md](references/setup.md) |
 | Debug from logs | [Debugging](#debugging) below |
+| Make a page or route faster | [Making it faster](#making-it-faster) below |
 | Create, switch, target or roll out flags; segments; guards | [references/flags.md](references/flags.md) |
 | The exact parameters of every tool | [references/tools.md](references/tools.md), generated from the server |
 
@@ -36,6 +37,7 @@ Reading, with any token:
 - **Projects:** `list_projects` (roles, DSN, recent environments) and `list_members`.
 - **Logs:** `search_logs`, `get_log`, `get_surrounding_logs`.
 - **Overview:** `top_issues`, `log_patterns`, `log_stats`, `request_stats`, `list_releases`.
+- **Speed:** `route_timing` (where a route's time goes, across its requests). `get_log` on a request log shows that request's own waterfall.
 - **Flags:** `list_flags`, `get_flag`, `list_segments`, `get_segment`, `list_environments`.
 - **Alerts and views:** `list_alerts` (rules and channels, with ids) and `list_saved_views`.
 
@@ -68,6 +70,36 @@ Work from evidence in the logs to the code, and name the log ids and links you r
    - `log_stats` with `from` and `to` around a deploy shows whether errors rose after it.
 6. **Check feature flags.** Each log carries the flags its page or request had read. `get_flag` compares the errors per 1,000 reads of each value with the value served while off. Search `flag:<key>=<value>` for the logs under one value.
 7. **Report.** Give the cause, the evidence (log ids, issue ids), the fix, and the "View in Loggy" link the tool returned, so the user can see it themselves.
+
+## Making it faster
+
+With `instrumentation.ts` in place, loggy-next 0.7 and later record where each request's time went, with no code from the app. The record covers:
+
+- every `fetch` made while the request ran, with its URL, status, length, and whether it came from Next.js's cache (and why not);
+- the page's render, or the Route Handler's run.
+
+Time inside the render that no fetch accounts for is shown as such. That time is database queries, other awaited calls or computation, which aren't broken down.
+
+1. **Find the slow routes.** `request_stats` lists the slowest routes, by p95.
+2. **See where the route's time goes.** Call `route_timing` with the route exactly as `request_stats` writes it, such as `/dashboard` or `/residents/[id]`. It shows:
+   - the fetches that cost the most, with their cache hit share;
+   - how much time is outside any fetch;
+   - how often fetches ran one after another that could have run together, and what that would save.
+3. **Look at one slow request.** Call `get_log` on the slowest request that `route_timing` names. It shows the request's waterfall, each step as start +length in ms, and what could make it faster.
+4. **Fix it in the code.** Find the route's `page.tsx`, its layouts or its `route.ts`, and the code behind each fetch host and path.
+   - **Fetches awaited one after another that don't depend on each other.** Start them together with `Promise.all`, or move each into its own component under `<Suspense>` so they stream separately.
+   - **A slow GET that isn't cached, whose data doesn't change per request or per user.**
+     - With `cacheComponents: true` in `next.config`, cache it with `"use cache"` and `cacheLife`.
+     - Otherwise, use `fetch(url, { next: { revalidate } })`.
+     - Check `node_modules/next/dist/docs/` for the version the project uses, since caching changed between versions.
+   - **The same URL fetched more than once.** Fetch it once and pass the result down, or cache it.
+   - **A lot of time outside fetches.** Look at the other awaits in that code: database queries that could run together, a missing index, or work that could be cached.
+5. **Check after the deploy.** Compare `route_timing` with `from` set after the deploy against the period before it. `list_releases` shows when the deploy started logging.
+
+Caveats:
+
+- If a route has no timing, the app runs an older loggy-next or has no `instrumentation.ts`. See [references/setup.md](references/setup.md).
+- A `"use cache"` hit doesn't show as a fetch at all. Only its absence shows it.
 
 ### Search language
 

@@ -48,7 +48,7 @@ It renders nothing, and it works in a Server Component layout.
 
 ## 4. instrumentation.ts (recommended)
 
-Without this file, server logs written before the first page render are missed. That includes static pages and Route Handlers. With it, logging starts when the server boots, it records the route of uncaught server errors, and it writes one log per request: method, status, duration, IP, headers, body, and the error response.
+Without this file, server logs written before the first page render are missed. That includes static pages and Route Handlers. With it, logging starts when the server boots, it records the route of uncaught server errors, and it writes one log per request: method, status, duration, IP, headers, body, and the error response. From loggy-next 0.7 on, each request log also records where the time went: every `fetch` with its length and cache status, and the render or Route Handler around them.
 
 ```ts
 // instrumentation.ts, next to the app folder (src/instrumentation.ts when the app uses src/)
