@@ -1,0 +1,13 @@
+{
+  "name": "loggy",
+  "owner": { "name": "Peter Bohus", "url": "https://github.com/Sekiraw" },
+  "description": "The Loggy plugin for Claude Code: logs and feature flags for Next.js apps.",
+  "plugins": [
+    {
+      "name": "loggy",
+      "source": "./",
+      "category": "observability",
+      "tags": ["nextjs", "logging", "feature-flags"]
+    }
+  ]
+}

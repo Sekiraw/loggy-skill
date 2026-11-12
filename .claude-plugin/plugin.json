@@ -1,0 +1,25 @@
+{
+  "name": "loggy",
+  "displayName": "Loggy",
+  "description": "Logs and feature flags for Next.js apps. Sets up loggy-next, debugs from your app's real browser and server logs, and runs your feature flags and alerts through Loggy's MCP server.",
+  "author": { "name": "Peter Bohus", "url": "https://github.com/Sekiraw" },
+  "homepage": "https://loggy-next.vercel.app",
+  "repository": "https://github.com/Sekiraw/loggy-skill",
+  "license": "MIT",
+  "keywords": ["nextjs", "logging", "feature-flags", "observability", "debugging", "mcp"],
+  "userConfig": {
+    "api_token": {
+      "type": "string",
+      "title": "Loggy API token",
+      "description": "Create one on the AI assistants page of your Loggy dashboard: https://loggy-next.vercel.app/ai. Tick \"Can also make changes\" to let Claude change flags and alerts too.",
+      "required": true,
+      "sensitive": true
+    },
+    "url": {
+      "type": "string",
+      "title": "Loggy URL",
+      "description": "Where your Loggy dashboard runs. Change it only for your own Loggy server, or http://localhost:3001 while developing Loggy.",
+      "default": "https://loggy-next.vercel.app"
+    }
+  }
+}
