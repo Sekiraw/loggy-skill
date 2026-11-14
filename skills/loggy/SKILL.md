@@ -37,7 +37,7 @@ Reading, with any token:
 - **Projects:** `list_projects` (roles, DSN, recent environments) and `list_members`.
 - **Logs:** `search_logs`, `get_log`, `get_surrounding_logs`.
 - **Overview:** `top_issues`, `log_patterns`, `log_stats`, `request_stats`, `list_releases`.
-- **Speed:** `route_timing` (where a route's time goes, across its requests). `get_log` on a request log shows that request's own waterfall.
+- **Speed:** `page_speed` (Core Web Vitals from visitors' browsers, by page and release, and what a slow page waited on) and `route_timing` (where a route's time goes on the server, across its requests). `get_log` on a request log shows that request's own waterfall.
 - **Flags:** `list_flags`, `get_flag`, `list_segments`, `get_segment`, `list_environments`.
 - **Alerts and views:** `list_alerts` (rules and channels, with ids) and `list_saved_views`.
 
@@ -72,6 +72,15 @@ Work from evidence in the logs to the code, and name the log ids and links you r
 7. **Report.** Give the cause, the evidence (log ids, issue ids), the fix, and the "View in Loggy" link the tool returned, so the user can see it themselves.
 
 ## Making it faster
+
+Start with how slow it is for visitors. `page_speed` gives the Core Web Vitals from real browsers, at the 75th percentile, by page and by release:
+
+- **LCP** (how soon the main content shows), **INP** (how quickly a click or key press gets a response) and **CLS** (how much the page jumps) are rated good, needs improvement or poor by Google's thresholds.
+- With `route` set to a page as it lists them, it says what that page's slowest views waited on, the elements involved, and what to change. Match the element names (tags, ids and classes, such as `main>img.hero` or `button#pay`) to components in the code.
+- An LCP that is mostly "server response" is slow on the server: continue with the steps below. Otherwise the fix is in the browser: the LCP image (`preload` on `next/image`, `sizes`), fonts (`next/font`), Client Components that hydrate late, or event handlers (`startTransition`, `next/dynamic`).
+- Page speed needs loggy-next 0.8 or later. The person sees the same on the Speed page.
+
+For the server's part:
 
 With `instrumentation.ts` in place, loggy-next 0.7 and later record where each request's time went, with no code from the app. The record covers:
 
