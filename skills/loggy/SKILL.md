@@ -123,6 +123,7 @@ Terms are combined with AND:
 - **Structured data.** `data.orderId:ord_1`, `data.durationMs:>1000`, `data.body.email:*@example.com`, `data.response.body.error:*declined*`.
 - **Deploys and flags.** `release:a3f9c2*`, `flag:new-checkout=true`, `flag:new-checkout=*`.
 - **Joins.** `session:<id>`, `issue:<id>`, `has:stack|data|url|session|issue|release|flags`.
+- **Bots.** `has:bot` finds logs that look automated: crawlers, vulnerability scanners, scripts and the hosting platform's own requests. `-has:bot` leaves them out. `get_log` names the reasons, and `request_stats` counts visitors without them. It is a judgement from headers and network, not proof.
 
 `search_logs` takes `range` (15m, 1h, 6h, 24h, 7d, 30d), or `from` and `to` in ISO 8601, for at most 91 days. For more results, pass back the `cursor` it returns, with the same query.
 
