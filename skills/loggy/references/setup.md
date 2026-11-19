@@ -60,15 +60,18 @@ If the file already exists:
 - Call `register` from loggy-next inside the existing `register`, and do the same for `onRequestError`.
 - If the app already registers its own OpenTelemetry, for example `@vercel/otel` or Sentry, Loggy leaves it alone and doesn't write request logs.
 
-## 5. The route list (optional)
+## 5. After each build: routes and source maps (optional)
 
-To see which pages, Route Handlers and Server Actions nobody uses, the build sends Loggy its list of routes. Requests alone only show the routes that are used. From loggy-next 0.9, run `loggy-next routes` after `next build` in the app's `package.json`:
+From loggy-next 0.10, `loggy-next upload` after `next build` sends Loggy what the build made. In 0.9 the command is `loggy-next routes`, which sends the route list only; it still works. Add it to the app's `package.json`:
 
 ```json
-"build": "next build && loggy-next routes"
+"build": "next build && loggy-next upload"
 ```
 
-It reads the list from `.next`, and the DSN from the environment or the app's `.env` files. On Vercel it runs with each deployment, and preview builds are kept apart from production. It never fails a build. Pass `--dir` if `next.config` sets `distDir`, and `--dry-run` to print the list without sending it. Use is counted from request logs (step 4) and page views.
+- **The route list**, so the Routes page and `route_usage` can show the pages, Route Handlers and Server Actions nobody uses. Requests alone only show the routes that are used. Use is counted from request logs (step 4) and page views.
+- **The browser source maps**, so browser stack traces show source files and lines instead of minified code. These need two more things. One is `productionBrowserSourceMaps: true` in `next.config`. The other is `LOGGY_SERVER_KEY` where the app is built (on Vercel, the project's Environment Variables), set to the server key from the project's Settings page. That key is secret: never give it a `NEXT_PUBLIC_` name, and never write it into a file in the repository. The source code is taken out of each map before sending, and the maps are deleted from the build after, so the deployment doesn't serve them.
+
+It reads the DSN and the key from the environment or the app's `.env` files. On Vercel it runs with each deployment, and preview builds are kept apart from production. It never fails a build. Pass `--dir` if `next.config` sets `distDir`, `--dry-run` to print what it would send without sending or removing anything, and `--keep-source-maps` to leave the maps in the build.
 
 ## 6. Check it works
 

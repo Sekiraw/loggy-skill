@@ -63,9 +63,9 @@ Work from evidence in the logs to the code, and name the log ids and links you r
    - `log_patterns` shows what a project mostly logs, at every level.
 2. **Narrow down** with `search_logs`, in the search language below. Begin with the user's words: an error message, a path, an order id.
 3. **Open the evidence.**
-   - `get_log` gives one log in full: its stack, its structured data, and for request logs the IP, headers, body and error response.
+   - `get_log` gives one log in full: its stack, its structured data, and for request logs the IP, headers, body and error response. A browser stack comes mapped to source files and lines when the build uploaded its source maps.
    - `get_surrounding_logs` with `query: "session:<id>"` shows what that one visitor did just before, in the browser and on the server together.
-4. **Find the cause in the code.** Match the stack frames, the `url`, the route or the message text to files in this repository, and read them. Production browser stacks are minified (source maps aren't supported yet), so lean on the message, the path and the data.
+4. **Find the cause in the code.** Match the stack frames, the `url`, the route or the message text to files in this repository, and read them. A browser stack that `get_log` mapped to the source names files such as `src/app/support/form.tsx:42:13`: start with the first frame that is the app's own code rather than a library under node_modules. One left minified (`chunks/2-6i6tdbju1gr.js:1:47214`) says little, so lean on the message, the path and the data, and suggest sending source maps (see [references/setup.md](references/setup.md)). React's minified errors arrive written out, ending in `(React error #418)`.
 5. **Find when it started.**
    - `list_releases` shows which deploy first brought an issue.
    - Search `release:<sha>` for one deploy's logs.
@@ -130,7 +130,7 @@ Pass `status: "unused"` or `status: "quiet"` for just those, and `environment` f
 2. Before suggesting a removal, look for what the counts can't see. These include webhooks and cron endpoints called rarely, links in emails, admin-only pages, and code that calls the route from outside the app. Search the repository for the path and the action's name.
 3. Say how long use has been counted ("Use counted since" in the result). A route never used in two weeks of counting proves much less than one never used in a year.
 
-It needs the build to send its route list: `loggy-next routes` after `next build`, from loggy-next 0.9. Without it, `route_usage` explains the setup and `request_stats` only knows the routes that were requested. See [references/setup.md](references/setup.md). The person sees the same on the Routes page.
+It needs the build to send its route list: `loggy-next upload` after `next build` (loggy-next 0.10), or `loggy-next routes` in 0.9. Without it, `route_usage` explains the setup and `request_stats` only knows the routes that were requested. See [references/setup.md](references/setup.md). The person sees the same on the Routes page.
 
 ### Search language
 
@@ -144,6 +144,7 @@ Terms are combined with AND:
 - **Deploys and flags.** `release:a3f9c2*`, `flag:new-checkout=true`, `flag:new-checkout=*`.
 - **Joins.** `session:<id>`, `issue:<id>`, `has:stack|data|url|session|issue|release|flags`.
 - **Bots.** `has:bot` finds logs that look automated: crawlers, vulnerability scanners, scripts and the hosting platform's own requests. `-has:bot` leaves them out. `get_log` names the reasons, and `request_stats` counts visitors without them. It is a judgement from headers and network, not proof.
+- **Page speed.** The SDK sends a "Page speed: LCP ..., CLS ..." log per page view. Every search leaves them out unless it says `is:vitals`; use `page_speed` to analyse them.
 
 `search_logs` takes `range` (15m, 1h, 6h, 24h, 7d, 30d), or `from` and `to` in ISO 8601, for at most 91 days. For more results, pass back the `cursor` it returns, with the same query.
 
