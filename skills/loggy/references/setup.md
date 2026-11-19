@@ -60,7 +60,17 @@ If the file already exists:
 - Call `register` from loggy-next inside the existing `register`, and do the same for `onRequestError`.
 - If the app already registers its own OpenTelemetry, for example `@vercel/otel` or Sentry, Loggy leaves it alone and doesn't write request logs.
 
-## 5. Check it works
+## 5. The route list (optional)
+
+To see which pages, Route Handlers and Server Actions nobody uses, the build sends Loggy its list of routes. Requests alone only show the routes that are used. From loggy-next 0.9, run `loggy-next routes` after `next build` in the app's `package.json`:
+
+```json
+"build": "next build && loggy-next routes"
+```
+
+It reads the list from `.next`, and the DSN from the environment or the app's `.env` files. On Vercel it runs with each deployment, and preview builds are kept apart from production. It never fails a build. Pass `--dir` if `next.config` sets `distDir`, and `--dry-run` to print the list without sending it. Use is counted from request logs (step 4) and page views.
+
+## 6. Check it works
 
 1. Run the app and open a page.
 2. Call `search_logs` with `range: "15m"` on the project. Browser `console.warn` and `console.error` show up, and so does a request log per request when `instrumentation.ts` is in place.

@@ -1,6 +1,6 @@
 ---
 name: loggy
-description: Use for anything involving Loggy or the loggy-next package in a Next.js app. That covers adding logging or feature flags to an app; debugging an error, a failing request or a slowdown from the app's real browser and server logs; finding which deploy or flag value brought a problem; and creating, switching, targeting and rolling out feature flags, segments, alerts and saved log views. Use it whenever the user mentions their logs, production errors, a feature flag or a rollout in a project that depends on loggy-next.
+description: Use for anything involving Loggy or the loggy-next package in a Next.js app. That covers adding logging or feature flags to an app; debugging an error, a failing request or a slowdown from the app's real browser and server logs; finding which deploy or flag value brought a problem; finding routes and Server Actions nobody uses; and creating, switching, targeting and rolling out feature flags, segments, alerts and saved log views. Use it whenever the user mentions their logs, production errors, a feature flag or a rollout in a project that depends on loggy-next.
 ---
 
 # Loggy
@@ -27,6 +27,7 @@ Loggy collects the browser and server logs of Next.js apps and runs their featur
 | Add Loggy to an app, or check an existing setup | [references/setup.md](references/setup.md) |
 | Debug from logs | [Debugging](#debugging) below |
 | Make a page or route faster | [Making it faster](#making-it-faster) below |
+| Find routes, endpoints or Server Actions nobody uses | [Unused routes](#unused-routes) below |
 | Create, switch, target or roll out flags; segments; guards | [references/flags.md](references/flags.md) |
 | The exact parameters of every tool | [references/tools.md](references/tools.md), generated from the server |
 
@@ -37,6 +38,7 @@ Reading, with any token:
 - **Projects:** `list_projects` (roles, DSN, recent environments) and `list_members`.
 - **Logs:** `search_logs`, `get_log`, `get_surrounding_logs`.
 - **Overview:** `top_issues`, `log_patterns`, `log_stats`, `request_stats`, `list_releases`.
+- **Unused routes:** `route_usage` (every page, Route Handler and Server Action in the latest build, with when each was last used).
 - **Speed:** `page_speed` (Core Web Vitals from visitors' browsers, by page and release, and what a slow page waited on) and `route_timing` (where a route's time goes on the server, across its requests). `get_log` on a request log shows that request's own waterfall.
 - **Flags:** `list_flags`, `get_flag`, `list_segments`, `get_segment`, `list_environments`.
 - **Alerts and views:** `list_alerts` (rules and channels, with ids) and `list_saved_views`.
@@ -111,6 +113,24 @@ Caveats:
 
 - If a route has no timing, the app runs an older loggy-next or has no `instrumentation.ts`. See [references/setup.md](references/setup.md).
 - A `"use cache"` hit doesn't show as a fetch at all. Only its absence shows it.
+
+## Unused routes
+
+Before removing a feature, or to find dead code, check what is actually used. `route_usage` lists every page, Route Handler and Server Action in the app's latest build, least used first:
+
+- **never used**: no request or page view from a person since counting began;
+- **only bots**: requested, but only by crawlers, scanners and scripts;
+- **quiet**: used before, but not in the last 30 days;
+- **new**: added in the last 7 days and not used yet;
+- **in use**, with the last use and the counts for 30 and 90 days.
+
+Pass `status: "unused"` or `status: "quiet"` for just those, and `environment` for a preview build's list.
+
+1. Match each candidate to its file: a route such as `/reports/[id]` is `app/reports/[id]/page.tsx` or `route.ts`, inside any route groups. An action is named with its file.
+2. Before suggesting a removal, look for what the counts can't see. These include webhooks and cron endpoints called rarely, links in emails, admin-only pages, and code that calls the route from outside the app. Search the repository for the path and the action's name.
+3. Say how long use has been counted ("Use counted since" in the result). A route never used in two weeks of counting proves much less than one never used in a year.
+
+It needs the build to send its route list: `loggy-next routes` after `next build`, from loggy-next 0.9. Without it, `route_usage` explains the setup and `request_stats` only knows the routes that were requested. See [references/setup.md](references/setup.md). The person sees the same on the Routes page.
 
 ### Search language
 
