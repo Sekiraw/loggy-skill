@@ -35,7 +35,7 @@ Loggy collects the browser and server logs of Next.js apps and runs their featur
 
 Reading, with any token:
 
-- **Projects:** `list_projects` (roles, DSN, recent environments) and `list_members`.
+- **Projects:** `list_projects` (roles, DSN, recent environments), `projects_overview` (every project's last 24 hours in production, or another environment, against the 24 before: errors, new issues, requests and 5xx, response time, page load, last log) and `list_members`.
 - **Logs:** `search_logs`, `get_log`, `get_surrounding_logs`.
 - **Overview:** `top_issues`, `log_patterns`, `log_stats`, `request_stats`, `list_releases`.
 - **Unused routes:** `route_usage` (every page, Route Handler and Server Action in the latest build, with when each was last used).
@@ -57,6 +57,7 @@ Changing, with a token that can make changes:
 Work from evidence in the logs to the code, and name the log ids and links you relied on.
 
 1. **Start wide.**
+   - `projects_overview` says which project changed in the last day, when it isn't clear which one to look at, or the person asks how things are going.
    - `top_issues` groups the errors and warnings of the last 24 hours, with an `issue:<id>` for each.
    - `log_stats` shows counts over time and the paths with the most errors.
    - `request_stats` covers traffic, p50 and p95 response times, and the slowest and failing routes. Use it for "it's slow" or "requests fail".
