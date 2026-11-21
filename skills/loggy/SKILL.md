@@ -1,13 +1,13 @@
 ---
 name: loggy
-description: Use for anything involving Loggy or the loggy-next package in a Next.js app. That covers adding logging or feature flags to an app; debugging an error, a failing request or a slowdown from the app's real browser and server logs; finding which deploy or flag value brought a problem; finding routes and Server Actions nobody uses; and creating, switching, targeting and rolling out feature flags, segments, alerts and saved log views. Use it whenever the user mentions their logs, production errors, a feature flag or a rollout in a project that depends on loggy-next.
+description: Use for anything involving Loggy, the loggy-next package in a Next.js app, or the loggy-react-native package in a React Native or Expo app. That covers adding logging, crash reports or feature flags to an app; debugging an error, a crash, a failing request or a slowdown from the app's real browser, server and phone logs; finding which deploy or flag value brought a problem; finding routes and Server Actions nobody uses; and creating, switching, targeting and rolling out feature flags, segments, alerts and saved log views. Use it whenever the user mentions their logs, production errors, crashes, a feature flag or a rollout in a project that depends on loggy-next or loggy-react-native.
 ---
 
 # Loggy
 
-Loggy collects the browser and server logs of Next.js apps and runs their feature flags:
+Loggy collects the browser and server logs of Next.js apps, and the logs and crashes of React Native apps, and runs their feature flags:
 
-- `loggy-next` is the npm package the app uses.
+- `loggy-next` is the npm package a Next.js app uses, and `loggy-react-native` the one a React Native or Expo app uses.
 - The dashboard at https://loggy-next.vercel.app stores the logs and the flags.
 - The `loggy` MCP tools read the logs and flags. With a token that can make changes, they also change flags, segments, environments, alerts and saved views, as a project member could.
 
@@ -18,13 +18,14 @@ Loggy collects the browser and server logs of Next.js apps and runs their featur
   - Without the plugin, the user adds the server: `claude mcp add --transport http loggy https://loggy-next.vercel.app/api/mcp --header "Authorization: Bearer loggy_pat_..."`.
   - Either way, tokens are created at https://loggy-next.vercel.app/ai.
 - **Reading tools but no change tools** (no `set_flag_on`, no `create_flag`): the token only reads. Before you can change anything, the user needs a new token with "Can also make changes" ticked. Bring this up only when they want a change.
-- **Which project?** `list_projects` shows each project's DSN. To match the repository you are in, compare that DSN with `NEXT_PUBLIC_LOGGY_DSN` in `.env.local` or `.env`. The key before the `@` is the project's public key. Pass `project` to every tool when the account has more than one.
+- **Which project?** `list_projects` shows each project's DSN. To match the repository you are in, compare that DSN with `NEXT_PUBLIC_LOGGY_DSN` in `.env.local` or `.env`, or `EXPO_PUBLIC_LOGGY_DSN` in a React Native app's `.env`. The key before the `@` is the project's public key. Pass `project` to every tool when the account has more than one.
 
 ## What to read for the task
 
 | Task | Read |
 |---|---|
-| Add Loggy to an app, or check an existing setup | [references/setup.md](references/setup.md) |
+| Add Loggy to a Next.js app, or check an existing setup | [references/setup.md](references/setup.md) |
+| Add Loggy to a React Native or Expo app | [references/react-native.md](references/react-native.md) |
 | Debug from logs | [Debugging](#debugging) below |
 | Make a page or route faster | [Making it faster](#making-it-faster) below |
 | Find routes, endpoints or Server Actions nobody uses | [Unused routes](#unused-routes) below |
@@ -72,7 +73,8 @@ Work from evidence in the logs to the code, and name the log ids and links you r
    - Search `release:<sha>` for one deploy's logs.
    - `log_stats` with `from` and `to` around a deploy shows whether errors rose after it.
 6. **Check feature flags.** Each log carries the flags its page or request had read. `get_flag` compares the errors per 1,000 reads of each value with the value served while off. Search `flag:<key>=<value>` for the logs under one value.
-7. **Report.** Give the cause, the evidence (log ids, issue ids), the fix, and the "View in Loggy" link the tool returned, so the user can see it themselves.
+7. **Logs from a phone.** An app's logs have `source:mobile`. Their `url` is the screen (`url:/parking/*`), their user agent names the app version and the device (`browser:android`, `browser:ios`), and their release is the app version, with the EAS Update after it when one ran (`1.4.0+3f2a1b9c`). Errors that ended the app carry `data.fatal:true`; a crash is often sent on the next launch, so its time is when it happened but it may arrive later. Production stacks point into the Hermes bundle (`index.android.bundle:1:184233`) and can't be mapped yet, so lean on the message, the screen, the release and `data.componentStack`.
+8. **Report.** Give the cause, the evidence (log ids, issue ids), the fix, and the "View in Loggy" link the tool returned, so the user can see it themselves.
 
 ## Making it faster
 
@@ -138,8 +140,8 @@ It needs the build to send its route list: `loggy-next upload` after `next build
 Terms are combined with AND:
 
 - **Text and phrases.** Words match anywhere, in any case. `"exact phrase"` matches a phrase, and `-word` excludes a word.
-- **Levels and sources.** `level:error,warn`, `level:>=warn`, `source:client|server|edge`, `env:production`.
-- **Paths and fields.** `url:/checkout*` (`*` matches anything), `message:text`, `stack:text`, `browser:safari`.
+- **Levels and sources.** `level:error,warn`, `level:>=warn`, `source:client|server|edge|mobile` (mobile is a React Native app), `env:production`.
+- **Paths and fields.** `url:/checkout*` (`*` matches anything), `message:text`, `stack:text`, `browser:safari` (for an app, the device: `browser:android`).
 - **Request logs.** `method:POST`, `status:>=500`, `status:404`, `duration:>1000` (in ms).
 - **Structured data.** `data.orderId:ord_1`, `data.durationMs:>1000`, `data.body.email:*@example.com`, `data.response.body.error:*declined*`.
 - **Deploys and flags.** `release:a3f9c2*`, `flag:new-checkout=true`, `flag:new-checkout=*`.
